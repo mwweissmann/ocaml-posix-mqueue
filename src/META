@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: b85eaf30fe12c7d5e1d3c91decf20010)
+version = "0.5.3"
+description = "POSIX message queues"
+requires = "unix bytes"
+archive(byte) = "mqueue.cma"
+archive(byte, plugin) = "mqueue.cma"
+archive(native) = "mqueue.cmxa"
+archive(native, plugin) = "mqueue.cmxs"
+exists_if = "mqueue.cma"
+# OASIS_STOP
+
