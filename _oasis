@@ -1,0 +1,47 @@
+OASISFormat: 0.4
+Name:        mqueue
+Version:     0.5.3
+Synopsis:    POSIX message queues
+Description:  The mqueue library is a small OCaml library providing types
+  and functions for using POSIX message queues. The types and functions
+  try to stay close to the C API. This library has been tested on Linux,
+  but QNX, Solaris etc. should work, too. Mac OS X on the other hand does
+  NOT provide POSIX message queues (as of OS X 10.10). 
+Authors:     Markus W. Weissmann <markus.weissmann@in.tum.de>
+Maintainers: Markus W. Weissmann <markus.weissmann@in.tum.de>
+Homepage:    http://mqueue.forge.ocamlcore.org/
+License:     MIT
+Plugins:     META (0.4)
+
+Library "mqueue"
+  Path:       src
+  CSources:   mqueue_stubs.c
+  CCLib:      -lrt
+  CCOpt:      -O2 -Wall -Wextra -Wno-unused-parameter
+  BuildTools: ocamlbuild
+  Modules:    Mqueue
+  BuildDepends: unix, bytes
+
+Document doclib
+  Title:      API reference for POSIX message queues
+  Type:       ocamlbuild (0.3)
+  Install:    false
+  BuildTools+: ocamlbuild, ocamldoc
+  XOCamlbuildPath: src
+  XOCamlbuildLibraries: mqueue
+
+Executable "mqtest"
+  Path:       test
+  MainIs:     test.ml
+  Build$:     flag(tests)
+  CompiledObject: best
+  BuildTools: ocamlbuild
+  Install: false
+  BuildDepends: mqueue
+
+Test "mqtest"
+  Run$: flag(tests)
+  TestTools: mqtest
+  Command: $mqtest
+  WorkingDirectory: test
+
