@@ -114,7 +114,3 @@ val mq_name_max : int
   may provide some random file descriptor on other POSIX compliant systems. *)
 val fd_of : t -> Unix.file_descr
 
-(*
-val mq_timedreceive : t ->
-*)
-
