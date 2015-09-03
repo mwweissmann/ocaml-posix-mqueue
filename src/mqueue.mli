@@ -83,6 +83,12 @@ val mq_timedsend : t -> message -> timespec -> (t, [>`EUnix of Unix.error]) Rres
   message is a copy and will not be altered by subsequent calls. *)
 val mq_receive : t -> int -> (message, [>`EUnix of Unix.error]) Rresult.result
 
+(** [mq_timedreceive q bufsiz time] behaves like [mq_send q bufsiz] except
+  that if the queue is empty -- and the O_NONBLOCK flag is not enabled for
+  [q] -- then [time] will give an absolute ceiling for a timeout (given as
+  absolute time since 01.01.1970 00:00:00 (UTC)). *)
+val mq_timedreceive : t -> int -> timespec -> (message, [>`EUnix of Unix.error]) Rresult.result
+
 (** close the message queue *)
 val mq_close : t -> (unit, [>`EUnix of Unix.error]) Rresult.result
 

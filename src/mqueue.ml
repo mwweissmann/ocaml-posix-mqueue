@@ -60,7 +60,10 @@ external mq_timedsend : t -> message -> timespec ->
   (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_timedsend"
 
 external mq_receive : t -> int ->
-  (message, [>`EUnix of Unix.error]) Rresult.result= "mqueue_mq_receive"
+  (message, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_receive"
+
+external mq_timedreceive : t -> int -> timespec ->
+  (message, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_timedreceive"
 
 external mq_unlink : string ->
   (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_unlink"
