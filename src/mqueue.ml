@@ -42,14 +42,40 @@ type message = {
   priority : int;
 }
 
-external mq_open : string -> flag list -> Unix.file_perm -> mq_attr -> t = "mqueue_mq_open"
-external mq_close : t -> unit = "mqueue_mq_close"
-external mq_send : t -> message -> unit = "mqueue_mq_send"
-external mq_receive : t -> int -> message = "mqueue_mq_receive"
-external mq_unlink : string -> unit = "mqueue_mq_unlink"
-external mq_getattr : t -> mq_attr = "mqueue_mq_getattr"
-external mq_setattr : t -> mq_attr -> mq_attr = "mqueue_mq_setattr"
-external mq_prio_max : unit -> int = "mqueue_mq_prio_max"
-external mq_name_max : unit -> int = "mqueue_mq_name_max"
+type timespec = {
+  tv_sec : int;
+  tv_nsec : int;
+}
+
+external mq_open : string -> flag list -> Unix.file_perm -> mq_attr ->
+  (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_open"
+
+external mq_close : t ->
+  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_close"
+
+external mq_send : t -> message ->
+  (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_send"
+
+external mq_timedsend : t -> message -> timespec ->
+  (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_timedsend"
+
+external mq_receive : t -> int ->
+  (message, [>`EUnix of Unix.error]) Rresult.result= "mqueue_mq_receive"
+
+external mq_unlink : string ->
+  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_unlink"
+
+external mq_getattr : t ->
+  (mq_attr, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_getattr"
+
+external mq_setattr : t -> mq_attr ->
+  (mq_attr, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_setattr"
+
+external mq_prio_max_ext : unit -> int = "mqueue_mq_prio_max"
+let mq_prio_max = mq_prio_max_ext ()
+
+external mq_name_max_ext : unit -> int = "mqueue_mq_name_max"
+let mq_name_max = mq_name_max_ext ()
+
 external fd_of : t -> Unix.file_descr = "%identity"
 

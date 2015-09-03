@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 319a5e04b68bac59cac326fbe60338a9)
+# DO NOT EDIT (digest: 9616d459dc9143a0a44958957b93b55a)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -25,14 +25,18 @@ true: annot, bin_annot
 "src/dllmqueue_stubs.so": oasis_library_mqueue_cclib
 <src/mqueue.{cma,cmxa}>: use_libmqueue_stubs
 <src/*.ml{,i,y}>: pkg_bytes
+<src/*.ml{,i,y}>: pkg_rresult
 <src/*.ml{,i,y}>: pkg_unix
 "src/mqueue_stubs.c": pkg_bytes
+"src/mqueue_stubs.c": pkg_rresult
 "src/mqueue_stubs.c": pkg_unix
 # Executable mqtest
 <test/test.{native,byte}>: pkg_bytes
+<test/test.{native,byte}>: pkg_rresult
 <test/test.{native,byte}>: pkg_unix
 <test/test.{native,byte}>: use_mqueue
 <test/*.ml{,i,y}>: pkg_bytes
+<test/*.ml{,i,y}>: pkg_rresult
 <test/*.ml{,i,y}>: pkg_unix
 <test/*.ml{,i,y}>: use_mqueue
 # OASIS_STOP
