@@ -7,3 +7,5 @@ Mac OS X on the other hand does currently NOT provide POSIX message queues (as o
 
 The [API of ocaml-mqueue](http://mqueue.forge.ocamlcore.org/doc/) is online at the [OCaml Forge](https://forge.ocamlcore.org/).
 
+This library is originally written by [Markus Weissmann](http://www.mweissmann.de/)
+
