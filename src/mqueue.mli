@@ -57,7 +57,7 @@ type timespec = {
 (** open a POSIX message queue; [mq_open p fs perm attr] opens the message queue
   of name [p] with the given flags [fs], permissions [perm] (if created) and
   queue attributes [attr].
-  [mq_open "/myqueue" [O_RDWR; O_CREAT] 0x644 {.mq_flags=0; .mq_maxmsg=10; .mq_msgsize=512; .mq_cursmsgs=0]
+  [mq_open "/myqueue" [O_RDWR; O_CREAT] 0x644 {.mq_flags=0; .mq_maxmsg=10; .mq_msgsize=512; .mq_curmsgs=0}]
   opens the message queue "/myqueue" for reading and writing; if the queue does
   not yet exist, it is created with the Unix permissions set to 0x644; it can
   hold as most 10 messages of size 512 bytes each. The number of current

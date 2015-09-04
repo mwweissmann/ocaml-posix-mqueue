@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <sys/stat.h>
 #include <mqueue.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <caml/alloc.h>
 #include <caml/fail.h>
@@ -38,6 +39,14 @@ THE SOFTWARE.
 #include <caml/unixsupport.h>
 #include <caml/threads.h>
 #include <caml/signals.h>
+
+static value eunix;
+
+CAMLprim value mqueue_initialize(void) {
+  CAMLparam0();
+  eunix = caml_hash_variant("EUnix");
+  CAMLreturn (Val_unit);
+}
 
 CAMLprim value mqueue_mq_prio_max(value val_unit) {
   CAMLparam1(val_unit);
@@ -51,16 +60,16 @@ CAMLprim value mqueue_mq_name_max(value val_unit) {
 
 CAMLprim value mqueue_mq_getattr(value fd) {
   CAMLparam1(fd);
+  CAMLlocal3(result, perrno, rattr);
 
   int rc;
   struct mq_attr attr;
-  CAMLlocal1(rattr);
 
   caml_release_runtime_system();
   rc = mq_getattr(Int_val(fd), &attr);
   caml_acquire_runtime_system();
   if (-1 == rc) {
-    uerror("mq_getattr", Nothing);
+    goto ERROR;
   }
 
   rattr = caml_alloc(4, 0);
@@ -69,16 +78,29 @@ CAMLprim value mqueue_mq_getattr(value fd) {
   Store_field(rattr, 2, Val_int(attr.mq_msgsize));
   Store_field(rattr, 3, Val_int(attr.mq_curmsgs));
 
-  CAMLreturn(rattr);
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, rattr);
+goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 CAMLprim value mqueue_mq_setattr(value fd, value attr) {
   CAMLparam2(fd, attr);
+  CAMLlocal3(result, perrno, rattr);
 
   int rc;
   struct mq_attr attr_new;
   struct mq_attr attr_old;
-  CAMLlocal1(rattr);
 
   attr_new.mq_flags = Int_val(Field(attr, 0));
   attr_new.mq_maxmsg = Int_val(Field(attr, 1));
@@ -89,7 +111,7 @@ CAMLprim value mqueue_mq_setattr(value fd, value attr) {
   rc = mq_setattr(Int_val(fd), &attr_new, &attr_old);
   caml_acquire_runtime_system();
   if (-1 == rc) {
-    uerror("mq_setattr", Nothing);
+    goto ERROR;
   }
   
   rattr = caml_alloc(4, 0);
@@ -98,11 +120,25 @@ CAMLprim value mqueue_mq_setattr(value fd, value attr) {
   Store_field(rattr, 2, Val_int(attr_old.mq_msgsize));
   Store_field(rattr, 3, Val_int(attr_old.mq_curmsgs));
 
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, rattr);
+goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
   CAMLreturn(rattr);
 }
 
 CAMLprim value mqueue_mq_close(value fd) {
   CAMLparam1(fd);
+  CAMLlocal2(result, perrno);
 
   int rc;
 
@@ -110,14 +146,28 @@ CAMLprim value mqueue_mq_close(value fd) {
   rc = mq_close(Int_val(fd));
   caml_acquire_runtime_system();
   if (-1 == rc) {
-    uerror("mq_close", Nothing);
+    goto ERROR;
   }
 
-  CAMLreturn(Val_unit);
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, Val_unit);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 CAMLprim value mqueue_mq_unlink(value path) {
   CAMLparam1(path);
+  CAMLlocal2(result, perrno);
 
   int rc;
   size_t plen;
@@ -125,26 +175,40 @@ CAMLprim value mqueue_mq_unlink(value path) {
 
   plen = caml_string_length(path);
 #ifdef NOALLOCA
-  if (NULL == (buf = malloc(plen))) {
+  if (NULL == (buf = malloc(plen + 1))) {
     caml_raise_out_of_memory();
   }
 #else
-  buf = alloca(plen);
+  buf = alloca(plen + 1);
 #endif
   memcpy(buf, String_val(path), plen);
+  buf[plen] = '\0';
 
   caml_release_runtime_system();
   rc = mq_unlink(buf);
   caml_acquire_runtime_system();
 
   if (-1 == rc) {
-    uerror("mq_unlink", Nothing);
+    goto ERROR;
   }
 #ifdef NOALLOCA
   free(buf);
 #endif
 
-  CAMLreturn(Val_unit);
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, Val_unit);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 static int open_flag_table[6] = {
@@ -153,6 +217,7 @@ static int open_flag_table[6] = {
 
 CAMLprim value mqueue_mq_open(value path, value flags, value perm, value attr) {
   CAMLparam4(path, flags, perm, attr);
+  CAMLlocal2(result, perrno);
 
   int fd;
   char *p;
@@ -163,13 +228,14 @@ CAMLprim value mqueue_mq_open(value path, value flags, value perm, value attr) {
 
   plen = caml_string_length(path);
 #ifdef NOALLOCA
-  if (NULL == (p = malloc(plen))) {
+  if (NULL == (p = malloc(plen + 1))) {
     caml_raise_out_of_memory();
   }
 #else
-  p = alloca(plen);
+  p = alloca(plen + 1);
 #endif
   memcpy(p, String_val(path), plen);
+  p[plen] = '\0';
 
   cv_flags = convert_flag_list(flags, open_flag_table);
 
@@ -188,14 +254,28 @@ CAMLprim value mqueue_mq_open(value path, value flags, value perm, value attr) {
   caml_acquire_runtime_system();
 
   if (-1 == fd) {
-    uerror("mq_open", Nothing);
+    goto ERROR;
   }
 
-  CAMLreturn(Val_int(fd));
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, Val_int(fd));
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 CAMLprim value mqueue_mq_send(value fd, value message) {
   CAMLparam2(fd, message);
+  CAMLlocal2(result, perrno);
 
   int rc;
   size_t msg_len;
@@ -224,22 +304,89 @@ CAMLprim value mqueue_mq_send(value fd, value message) {
 #endif
   caml_acquire_runtime_system();
 
-  if (-1 == fd) {
-    uerror("mq_send", Nothing);
+  if (-1 == rc) {
+    goto ERROR;
   }
 
-  CAMLreturn(Val_unit);
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, fd);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
+}
+
+CAMLprim value mqueue_mq_timedsend(value fd, value message, value timeout) {
+  CAMLparam3(fd, message, timeout);
+  CAMLlocal2(result, perrno);
+
+  int rc;
+  size_t msg_len;
+  unsigned int p;
+  char *buf;
+  mqd_t q;
+  struct timespec time;
+
+  p = Int_val(Field(message, 1));
+  time.tv_sec = Int_val(Field(timeout, 0));
+  time.tv_nsec = Int_val(Field(timeout, 1));
+
+  msg_len = caml_string_length(Field(message, 0));
+#ifdef NOALLOCA
+  if (NULL == (buf = malloc(msg_len))) {
+    caml_raise_out_of_memory();
+  }
+#else
+  buf = alloca(msg_len);
+#endif
+  memcpy(buf, String_val(Field(message, 0)), msg_len);
+  q = Int_val(fd);
+
+  caml_release_runtime_system();
+  rc = mq_timedsend(q, buf, msg_len, p, &time);
+
+#ifdef NOALLOCA
+  free(buf);
+#endif
+  caml_acquire_runtime_system();
+
+  if (-1 == rc) {
+    goto ERROR;
+  }
+
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, fd);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 CAMLprim value mqueue_mq_receive(value fd, value size) {
   CAMLparam2(fd, size);
+  CAMLlocal4(message, payload, result, perrno);
 
   size_t bufsiz;
   mqd_t q;
   char *buf;
   ssize_t msglen;
   unsigned int prio;
-  CAMLlocal2(payload, message);
 
   bufsiz = Int_val(size);
   q = Int_val(fd);
@@ -257,7 +404,10 @@ CAMLprim value mqueue_mq_receive(value fd, value size) {
   caml_acquire_runtime_system();
 
   if (-1 == msglen) {
-    uerror("mq_receive", Nothing);
+#ifdef NOALLOCA
+    free(buf);
+#endif
+    goto ERROR;
   }
   payload = caml_alloc_string(msglen);
   memcpy(String_val(payload), buf, msglen);
@@ -270,7 +420,81 @@ CAMLprim value mqueue_mq_receive(value fd, value size) {
   Store_field(message, 0, payload);
   Store_field(message, 1, Val_int(prio));
 
-  CAMLreturn(message);
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, message);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
+}
+
+CAMLprim value mqueue_mq_timedreceive(value fd, value size, value timeout) {
+  CAMLparam3(fd, size, timeout);
+  CAMLlocal4(message, payload, result, perrno);
+
+  size_t bufsiz;
+  mqd_t q;
+  char *buf;
+  ssize_t msglen;
+  unsigned int prio;
+  struct timespec time;
+
+  bufsiz = Int_val(size);
+  q = Int_val(fd);
+  time.tv_sec = Int_val(Field(timeout, 0));
+  time.tv_nsec = Int_val(Field(timeout, 1));
+
+#ifdef NOALLOCA
+  if (NULL == (buf = malloc(bufsiz))) {
+    caml_raise_out_of_memory();
+  }
+#else
+  buf = alloca(bufsiz);
+#endif
+
+  caml_release_runtime_system();
+  msglen = mq_timedreceive(q, buf, bufsiz, &prio, &time);
+  caml_acquire_runtime_system();
+
+  if (-1 == msglen) {
+#ifdef NOALLOCA
+    free(buf);
+#endif
+    goto ERROR;
+  }
+  payload = caml_alloc_string(msglen);
+  memcpy(String_val(payload), buf, msglen);
+
+#ifdef NOALLOCA
+  free(buf);
+#endif
+
+  message = caml_alloc(2, 0);
+  Store_field(message, 0, payload);
+  Store_field(message, 1, Val_int(prio));
+
+  result = caml_alloc(1, 0); // Result.Ok
+  Store_field(result, 0, message);
+  goto END;
+
+ERROR:
+  perrno = caml_alloc(2, 0);
+  Store_field(perrno, 0, eunix); // `EUnix
+  Store_field(perrno, 1, unix_error_of_code(errno));
+
+  result = caml_alloc(1, 1); // Result.Error
+  Store_field(result, 0, perrno);
+
+END:
+  CAMLreturn(result);
 }
 
 /*

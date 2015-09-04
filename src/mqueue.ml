@@ -47,6 +47,9 @@ type timespec = {
   tv_nsec : int;
 }
 
+external mq_initialize : unit -> unit = "mqueue_initialize"
+let () = mq_initialize ()
+
 external mq_open : string -> flag list -> Unix.file_perm -> mq_attr ->
   (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_open"
 

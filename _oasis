@@ -43,5 +43,4 @@ Test "mqtest"
   Run$: flag(tests)
   TestTools: mqtest
   Command: $mqtest
-  WorkingDirectory: test
 
