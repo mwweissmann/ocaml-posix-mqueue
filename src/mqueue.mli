@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** POSIX message queue *)
+(** POSIX message queues *)
 
 (** Type of a POSIX message queue *)
 type t
@@ -34,7 +34,7 @@ type flag =
   | O_CREAT
   | O_EXCL
 
-(** attributes of a queue *)
+(** Attributes of a queue *)
 type mq_attr = {
   mq_flags : int;
   mq_maxmsg : int;
@@ -42,7 +42,7 @@ type mq_attr = {
   mq_curmsgs : int
 }
 
-(** type of a message with payload and priority; priority is a non-negative
+(** Type of a message with payload and priority; priority is a non-negative
   integer with system-specific upper bound of [mq_prio_max]. *)
 type message = {
   payload : Bytes.t;
@@ -54,7 +54,7 @@ type timespec = {
   tv_nsec : int;
 }
 
-(** open a POSIX message queue; [mq_open p fs perm attr] opens the message queue
+(** Open a POSIX message queue; [mq_open p fs perm attr] opens the message queue
   of name [p] with the given flags [fs], permissions [perm] (if created) and
   queue attributes [attr].
   [mq_open "/myqueue" [O_RDWR; O_CREAT] 0x644 {.mq_flags=0; .mq_maxmsg=10; .mq_msgsize=512; .mq_curmsgs=0}]
@@ -89,10 +89,10 @@ val mq_receive : t -> int -> (message, [>`EUnix of Unix.error]) Rresult.result
   absolute time since 01.01.1970 00:00:00 (UTC)). *)
 val mq_timedreceive : t -> int -> timespec -> (message, [>`EUnix of Unix.error]) Rresult.result
 
-(** close the message queue *)
+(** Close the message queue *)
 val mq_close : t -> (unit, [>`EUnix of Unix.error]) Rresult.result
 
-(** delete the given message queue *)
+(** Delete the given message queue *)
 val mq_unlink : string -> (unit, [>`EUnix of Unix.error]) Rresult.result
 
 (** [mq_setattr q attr] tries to set the attributes of the message queue [q] to
@@ -109,7 +109,7 @@ val mq_prio_max : int
 (** [mq_name_max] provides the maximum name length of a message queue. *)
 val mq_name_max : int
 
-(** get the Unix file descriptor of the given message queue; this can then
+(** Get the Unix file descriptor of the given message queue; this can then
   be used with [Unix.select]. This operation is valid on Linux systems but
   may provide some random file descriptor on other POSIX compliant systems. *)
 val fd_of : t -> Unix.file_descr
