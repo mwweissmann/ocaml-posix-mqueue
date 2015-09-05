@@ -7,7 +7,7 @@ Mac OS X on the other hand does currently NOT provide POSIX message queues (as o
 
 The [API of ocaml-mqueue](http://mqueue.forge.ocamlcore.org/doc/) is online at the [OCaml Forge](https://forge.ocamlcore.org/).
 
-Here is an example program that opens a queue, sends a message and then receives it's own messae again:
+Here is an example program that opens a queue, sends a message and then receives it's own message again:
 ```
 open Rresult
 open Mqueue
