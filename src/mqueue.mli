@@ -69,13 +69,13 @@ type timespec = {
 val mq_open : string -> flag list -> Unix.file_perm -> mq_attr -> (t, [> `EUnix of Unix.error ]) Rresult.result
 
 (** [mq_send q m] sends the nessage [m] on the queue [q]; if the queue is full,
-  this call will block; the function returns the message queue for convenience. *)
-val mq_send : t -> message -> (t, [> `EUnix of Unix.error ]) Rresult.result
+  this call will block; *)
+val mq_send : t -> message -> (unit, [> `EUnix of Unix.error ]) Rresult.result
 
 (** [mq_timedsend q m time] behaves like [mq_send q m] except that if the queue
   is full -- and [O_NONBLOCK] is not enabled for [q] -- then [time] will give an
   absolute ceiling for a timeout (given as absolute time since 01.01.1970 00:00:00 (UTC)). *)
-val mq_timedsend : t -> message -> timespec -> (t, [> `EUnix of Unix.error ]) Rresult.result
+val mq_timedsend : t -> message -> timespec -> (unit, [> `EUnix of Unix.error ]) Rresult.result
 
 (** [mq_receive q bufsiz] removes the oldest  message  with  the highest
   priority from the message queue. The [bufsiz] argument must be at least the

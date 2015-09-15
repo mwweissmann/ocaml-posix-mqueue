@@ -39,6 +39,30 @@ THE SOFTWARE.
 #include <caml/unixsupport.h>
 #include <caml/threads.h>
 #include <caml/signals.h>
+#include <caml/custom.h>
+
+void finalize_mq(value v) {
+  mqd_t * fd;
+  fd = (mqd_t *) Data_custom_val(v);
+  mq_close(*fd);
+}
+
+static struct custom_operations mqd_custom_ops = {
+  identifier:  "mqueue.mqd_t",
+  finalize:    finalize_mq,
+  compare:     custom_compare_default,
+  hash:        custom_hash_default,
+  serialize:   custom_serialize_default,
+  deserialize: custom_deserialize_default
+};
+
+static value copy_mq(mqd_t *some_mqd) {
+  CAMLparam0();
+  CAMLlocal1(v);
+  v = caml_alloc_custom(&mqd_custom_ops, sizeof(mqd_t), 0, 1);
+  memcpy(Data_custom_val(v), some_mqd, sizeof(mqd_t));
+  CAMLreturn(v);
+}
 
 static value eunix;
 
@@ -58,15 +82,16 @@ CAMLprim value mqueue_mq_name_max(value val_unit) {
   CAMLreturn(Val_int(NAME_MAX));
 }
 
-CAMLprim value mqueue_mq_getattr(value fd) {
-  CAMLparam1(fd);
+CAMLprim value mqueue_mq_getattr(value mq) {
+  CAMLparam1(mq);
   CAMLlocal3(result, perrno, rattr);
 
   int rc;
   struct mq_attr attr;
+  mqd_t *fd = (mqd_t *)Data_custom_val(mq);
 
   caml_release_runtime_system();
-  rc = mq_getattr(Int_val(fd), &attr);
+  rc = mq_getattr(*fd, &attr);
   caml_acquire_runtime_system();
   if (-1 == rc) {
     goto ERROR;
@@ -94,13 +119,14 @@ END:
   CAMLreturn(result);
 }
 
-CAMLprim value mqueue_mq_setattr(value fd, value attr) {
-  CAMLparam2(fd, attr);
+CAMLprim value mqueue_mq_setattr(value mq, value attr) {
+  CAMLparam2(mq, attr);
   CAMLlocal3(result, perrno, rattr);
 
   int rc;
   struct mq_attr attr_new;
   struct mq_attr attr_old;
+  mqd_t *fd = (mqd_t *)Data_custom_val(mq);
 
   attr_new.mq_flags = Int_val(Field(attr, 0));
   attr_new.mq_maxmsg = Int_val(Field(attr, 1));
@@ -108,7 +134,7 @@ CAMLprim value mqueue_mq_setattr(value fd, value attr) {
   attr_new.mq_curmsgs = Int_val(Field(attr, 3));
 
   caml_release_runtime_system();
-  rc = mq_setattr(Int_val(fd), &attr_new, &attr_old);
+  rc = mq_setattr(*fd, &attr_new, &attr_old);
   caml_acquire_runtime_system();
   if (-1 == rc) {
     goto ERROR;
@@ -136,14 +162,15 @@ END:
   CAMLreturn(rattr);
 }
 
-CAMLprim value mqueue_mq_close(value fd) {
-  CAMLparam1(fd);
+CAMLprim value mqueue_mq_close(value mq) {
+  CAMLparam1(mq);
   CAMLlocal2(result, perrno);
 
   int rc;
+  mqd_t *fd = (mqd_t *)Data_custom_val(mq);
 
   caml_release_runtime_system();
-  rc = mq_close(Int_val(fd));
+  rc = mq_close(*fd);
   caml_acquire_runtime_system();
   if (-1 == rc) {
     goto ERROR;
@@ -219,7 +246,7 @@ CAMLprim value mqueue_mq_open(value path, value flags, value perm, value attr) {
   CAMLparam4(path, flags, perm, attr);
   CAMLlocal2(result, perrno);
 
-  int fd;
+  mqd_t fd;
   char *p;
   int cv_flags;
   size_t plen;
@@ -258,7 +285,7 @@ CAMLprim value mqueue_mq_open(value path, value flags, value perm, value attr) {
   }
 
   result = caml_alloc(1, 0); // Result.Ok
-  Store_field(result, 0, Val_int(fd));
+  Store_field(result, 0, copy_mq(&fd));
   goto END;
 
 ERROR:
@@ -273,15 +300,16 @@ END:
   CAMLreturn(result);
 }
 
-CAMLprim value mqueue_mq_send(value fd, value message) {
-  CAMLparam2(fd, message);
+CAMLprim value mqueue_mq_send(value mq, value message) {
+  CAMLparam2(mq, message);
   CAMLlocal2(result, perrno);
 
   int rc;
   size_t msg_len;
   unsigned int p;
   char *buf;
-  mqd_t q;
+  mqd_t *fd;
+  fd = (mqd_t *)Data_custom_val(mq);
 
   p = Int_val(Field(message, 1));
 
@@ -294,10 +322,9 @@ CAMLprim value mqueue_mq_send(value fd, value message) {
   buf = alloca(msg_len);
 #endif
   memcpy(buf, String_val(Field(message, 0)), msg_len);
-  q = Int_val(fd);
 
   caml_release_runtime_system();
-  rc = mq_send(q, buf, msg_len, p);
+  rc = mq_send(*fd, buf, msg_len, p);
 
 #ifdef NOALLOCA
   free(buf);
@@ -309,7 +336,7 @@ CAMLprim value mqueue_mq_send(value fd, value message) {
   }
 
   result = caml_alloc(1, 0); // Result.Ok
-  Store_field(result, 0, fd);
+  Store_field(result, 0, Val_unit);
   goto END;
 
 ERROR:
@@ -324,16 +351,17 @@ END:
   CAMLreturn(result);
 }
 
-CAMLprim value mqueue_mq_timedsend(value fd, value message, value timeout) {
-  CAMLparam3(fd, message, timeout);
+CAMLprim value mqueue_mq_timedsend(value mq, value message, value timeout) {
+  CAMLparam3(mq, message, timeout);
   CAMLlocal2(result, perrno);
 
   int rc;
   size_t msg_len;
   unsigned int p;
   char *buf;
-  mqd_t q;
   struct timespec time;
+  mqd_t *fd;
+  fd = (mqd_t *)Data_custom_val(mq);
 
   p = Int_val(Field(message, 1));
   time.tv_sec = Int_val(Field(timeout, 0));
@@ -348,10 +376,9 @@ CAMLprim value mqueue_mq_timedsend(value fd, value message, value timeout) {
   buf = alloca(msg_len);
 #endif
   memcpy(buf, String_val(Field(message, 0)), msg_len);
-  q = Int_val(fd);
 
   caml_release_runtime_system();
-  rc = mq_timedsend(q, buf, msg_len, p, &time);
+  rc = mq_timedsend(*fd, buf, msg_len, p, &time);
 
 #ifdef NOALLOCA
   free(buf);
@@ -363,7 +390,7 @@ CAMLprim value mqueue_mq_timedsend(value fd, value message, value timeout) {
   }
 
   result = caml_alloc(1, 0); // Result.Ok
-  Store_field(result, 0, fd);
+  Store_field(result, 0, Val_unit);
   goto END;
 
 ERROR:
@@ -378,18 +405,18 @@ END:
   CAMLreturn(result);
 }
 
-CAMLprim value mqueue_mq_receive(value fd, value size) {
-  CAMLparam2(fd, size);
+CAMLprim value mqueue_mq_receive(value mq, value size) {
+  CAMLparam2(mq, size);
   CAMLlocal4(message, payload, result, perrno);
 
   size_t bufsiz;
-  mqd_t q;
   char *buf;
   ssize_t msglen;
   unsigned int prio;
+  mqd_t *fd;
+  fd = (mqd_t *)Data_custom_val(mq);
 
   bufsiz = Int_val(size);
-  q = Int_val(fd);
 
 #ifdef NOALLOCA
   if (NULL == (buf = malloc(bufsiz))) {
@@ -400,7 +427,7 @@ CAMLprim value mqueue_mq_receive(value fd, value size) {
 #endif
 
   caml_release_runtime_system();
-  msglen = mq_receive(q, buf, bufsiz, &prio);
+  msglen = mq_receive(*fd, buf, bufsiz, &prio);
   caml_acquire_runtime_system();
 
   if (-1 == msglen) {
@@ -436,19 +463,19 @@ END:
   CAMLreturn(result);
 }
 
-CAMLprim value mqueue_mq_timedreceive(value fd, value size, value timeout) {
-  CAMLparam3(fd, size, timeout);
+CAMLprim value mqueue_mq_timedreceive(value mq, value size, value timeout) {
+  CAMLparam3(mq, size, timeout);
   CAMLlocal4(message, payload, result, perrno);
 
   size_t bufsiz;
-  mqd_t q;
   char *buf;
   ssize_t msglen;
   unsigned int prio;
   struct timespec time;
+  mqd_t *fd;
+  fd = (mqd_t *)Data_custom_val(mq);
 
   bufsiz = Int_val(size);
-  q = Int_val(fd);
   time.tv_sec = Int_val(Field(timeout, 0));
   time.tv_nsec = Int_val(Field(timeout, 1));
 
@@ -461,7 +488,7 @@ CAMLprim value mqueue_mq_timedreceive(value fd, value size, value timeout) {
 #endif
 
   caml_release_runtime_system();
-  msglen = mq_timedreceive(q, buf, bufsiz, &prio, &time);
+  msglen = mq_timedreceive(*fd, buf, bufsiz, &prio, &time);
   caml_acquire_runtime_system();
 
   if (-1 == msglen) {

@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 943265f15f057abf8e5228575ff94a84)
-version = "0.6.0"
+# DO NOT EDIT (digest: 69ba0d91f282b76a3ae05f05ddd43aa9)
+version = "0.7.0"
 description = "POSIX message queues"
 requires = "unix bytes rresult"
 archive(byte) = "mqueue.cma"
