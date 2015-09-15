@@ -19,19 +19,25 @@ let _ =
     (* open the queue, creating it if it does not exist *)
     (mq_open name [O_RDWR; O_CREAT] 0o644 {mq_flags=0; mq_maxmsg=5; mq_msgsize=32; mq_curmsgs=0}) >>=
 
-    (* send a message *)
-    (fun q -> mq_send q {payload="hello ocaml-mqueue!"; priority=23}) >>=
+    (* if the queue is opened successfully... *)
+    (fun mq ->
+      (* .. send a message .. *)
+      (mq_send mq {payload="hello ocaml-mqueue!"; priority=23}) >>=
 
-    (* receive a message *)
-    (fun q -> mq_receive q 32)
+      (* .. and receive a message .. *)
+      (fun () -> mq_receive mq 32) >>|
+      
+      (* .. and print the message *)
+      (fun msg -> print_endline msg.payload)
+    )
   in
 
-  (* delete the queue afterwards *)
+  (* remove the queue from the system  *)
   let _ = mq_unlink name in
 
   (* handle the result *)
   match rc with
-  | Rresult.Ok msg -> print_endline msg.payload
+  | Rresult.Ok () -> print_endline "done"
   | Rresult.Error (`EUnix errno) -> print_endline (Unix.error_message errno)
 ```
 
