@@ -405,6 +405,14 @@ END:
   CAMLreturn(result);
 }
 
+CAMLprim value mqueue_fd_of(value mq) {
+  CAMLparam1(mq);
+  mqd_t *fd;
+  fd = (mqd_t *)Data_custom_val(mq);
+  int i = *fd;
+  CAMLreturn(Val_int(i));
+}
+
 CAMLprim value mqueue_mq_receive(value mq, value size) {
   CAMLparam2(mq, size);
   CAMLlocal4(message, payload, result, perrno);

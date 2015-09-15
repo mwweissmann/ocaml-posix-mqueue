@@ -83,5 +83,5 @@ let mq_prio_max = mq_prio_max_ext ()
 external mq_name_max_ext : unit -> int = "mqueue_mq_name_max"
 let mq_name_max = mq_name_max_ext ()
 
-external fd_of : t -> Unix.file_descr = "%identity"
+external fd_of : t -> Unix.file_descr = "mqueue_fd_of"
 

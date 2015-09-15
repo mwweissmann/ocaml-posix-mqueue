@@ -12,7 +12,7 @@ let _ =
     (mq_open name [O_RDWR; O_CREAT] 0o644 {mq_flags=0; mq_maxmsg=5; mq_msgsize=32; mq_curmsgs=0}) >>=
     (fun q ->
       (mq_send q {payload="hello ocaml-mqueue!"; priority=23}) >>=
-      (fun () -> mq_receive q 32) >>|
+      (fun () -> let _ = Unix.select [fd_of q] [] [] 10.0 in mq_receive q 32) >>|
       (fun msg -> print_endline msg.payload)
     )
   in

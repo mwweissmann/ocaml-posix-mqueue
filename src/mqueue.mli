@@ -57,14 +57,17 @@ type timespec = {
 (** Open a POSIX message queue; [mq_open p fs perm attr] opens the message queue
   of name [p] with the given flags [fs], permissions [perm] (if created) and
   queue attributes [attr].
-  [mq_open "/myqueue" [O_RDWR; O_CREAT] 0x644 {.mq_flags=0; .mq_maxmsg=10; .mq_msgsize=512; .mq_curmsgs=0}]
+  [mq_open "/myqueue" [O_RDWR; O_CREAT] 0o644 {mq_flags=0; mq_maxmsg=10; mq_msgsize=512; mq_curmsgs=0}]
   opens the message queue "/myqueue" for reading and writing; if the queue does
-  not yet exist, it is created with the Unix permissions set to 0x644; it can
+  not yet exist, it is created with the Unix permissions set to [0o644]; it can
   hold as most 10 messages of size 512 bytes each. The number of current
-  messages in the queue [.mq_curmsgs] is ignored by the system call.
+  messages in the queue [mq_curmsgs] is ignored by the system call.
   Queue names follow the form of "/somename", with a leading slash and at least
   one following character (none of which are slashes) with a maximum length of
   [mq_name_max ()].
+  Potential causes for errors are not obeying the naming scheme, not having
+  access rights to an already existing queue and using queue sizes larger than
+  allowed for normal users.
 *)
 val mq_open : string -> flag list -> Unix.file_perm -> mq_attr -> (t, [> `EUnix of Unix.error ]) Rresult.result
 
@@ -89,10 +92,12 @@ val mq_receive : t -> int -> (message, [> `EUnix of Unix.error ]) Rresult.result
   absolute time since 01.01.1970 00:00:00 (UTC)). *)
 val mq_timedreceive : t -> int -> timespec -> (message, [> `EUnix of Unix.error ]) Rresult.result
 
-(** Close the message queue *)
+(** Explicitely close the message queue; the queue is automatically closed when
+  cleaned up by the garbage collector, so executing [mq_close] on a queue is
+  purely optional. *)
 val mq_close : t -> (unit, [> `EUnix of Unix.error ]) Rresult.result
 
-(** Delete the given message queue *)
+(** [mq_unlink "/somequeue"] deletes the message queue ["/somequeue"]. *)
 val mq_unlink : string -> (unit, [> `EUnix of Unix.error ]) Rresult.result
 
 (** [mq_setattr q attr] tries to set the attributes of the message queue [q] to
@@ -110,7 +115,11 @@ val mq_prio_max : int
 val mq_name_max : int
 
 (** Get the Unix file descriptor of the given message queue; this can then
-  be used with [Unix.select]. This operation is valid on Linux systems but
-  may provide some random file descriptor on other POSIX compliant systems. *)
+  be used with [Unix.select]. This operation is valid on systems that implement
+  message queues as file descriptor (e.g. Linux and FreeBSD).
+  The file descriptor obtainted by [fd_of] may become invalid due to the
+  garbage collector closing the original descriptor!
+  On systems providing no compatibility between file descriptors and message
+  queues, this call may provide some random file descriptor! *)
 val fd_of : t -> Unix.file_descr
 
