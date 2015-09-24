@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 72706a971938563e5513f47be34dc172) *)
+(* DO NOT EDIT (digest: 4aff9d170043efce43f8035674bed998) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -607,11 +607,11 @@ end
 open Ocamlbuild_plugin;;
 let package_default =
   {
-     MyOCamlbuildBase.lib_ocaml = [("mqueue", ["src"], [])];
-     lib_c = [("mqueue", "src", [])];
+     MyOCamlbuildBase.lib_ocaml = [("posix-mqueue", ["src"], [])];
+     lib_c = [("posix-mqueue", "src", [])];
      flags =
        [
-          (["oasis_library_mqueue_ccopt"; "compile"],
+          (["oasis_library_posix_mqueue_ccopt"; "compile"],
             [
                (OASISExpr.EBool true,
                  S
@@ -626,9 +626,9 @@ let package_default =
                       A "-Wno-unused-parameter"
                    ])
             ]);
-          (["oasis_library_mqueue_cclib"; "link"],
+          (["oasis_library_posix_mqueue_cclib"; "link"],
             [(OASISExpr.EBool true, S [A "-cclib"; A "-lrt"])]);
-          (["oasis_library_mqueue_cclib"; "ocamlmklib"; "c"],
+          (["oasis_library_posix_mqueue_cclib"; "ocamlmklib"; "c"],
             [(OASISExpr.EBool true, S [A "-lrt"])])
        ];
      includes = [("test", ["src"])]

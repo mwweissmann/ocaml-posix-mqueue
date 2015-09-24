@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 364727926adbfaa2116c05aee8f618b6)
+# DO NOT EDIT (digest: 108f35fd0f6df623d6e9af75f24caf8e)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,16 +14,16 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
-# Library mqueue
-"src/mqueue.cmxs": use_mqueue
-<src/*.ml{,i,y}>: oasis_library_mqueue_ccopt
-"src/mqueue_stubs.c": oasis_library_mqueue_ccopt
-<src/mqueue.{cma,cmxa}>: oasis_library_mqueue_cclib
-"src/libmqueue_stubs.lib": oasis_library_mqueue_cclib
-"src/dllmqueue_stubs.dll": oasis_library_mqueue_cclib
-"src/libmqueue_stubs.a": oasis_library_mqueue_cclib
-"src/dllmqueue_stubs.so": oasis_library_mqueue_cclib
-<src/mqueue.{cma,cmxa}>: use_libmqueue_stubs
+# Library posix-mqueue
+"src/posix-mqueue.cmxs": use_posix-mqueue
+<src/*.ml{,i,y}>: oasis_library_posix_mqueue_ccopt
+"src/mqueue_stubs.c": oasis_library_posix_mqueue_ccopt
+<src/posix-mqueue.{cma,cmxa}>: oasis_library_posix_mqueue_cclib
+"src/libposix-mqueue_stubs.lib": oasis_library_posix_mqueue_cclib
+"src/dllposix-mqueue_stubs.dll": oasis_library_posix_mqueue_cclib
+"src/libposix-mqueue_stubs.a": oasis_library_posix_mqueue_cclib
+"src/dllposix-mqueue_stubs.so": oasis_library_posix_mqueue_cclib
+<src/posix-mqueue.{cma,cmxa}>: use_libposix-mqueue_stubs
 <src/*.ml{,i,y}>: pkg_bytes
 <src/*.ml{,i,y}>: pkg_posix-time
 <src/*.ml{,i,y}>: pkg_result
@@ -37,10 +37,10 @@ true: annot, bin_annot
 <test/test.{native,byte}>: pkg_posix-time
 <test/test.{native,byte}>: pkg_result
 <test/test.{native,byte}>: pkg_unix
-<test/test.{native,byte}>: use_mqueue
+<test/test.{native,byte}>: use_posix-mqueue
 <test/*.ml{,i,y}>: pkg_bytes
 <test/*.ml{,i,y}>: pkg_posix-time
 <test/*.ml{,i,y}>: pkg_result
 <test/*.ml{,i,y}>: pkg_unix
-<test/*.ml{,i,y}>: use_mqueue
+<test/*.ml{,i,y}>: use_posix-mqueue
 # OASIS_STOP

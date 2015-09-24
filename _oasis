@@ -1,5 +1,5 @@
 OASISFormat: 0.4
-Name:        mqueue
+Name:        posix-mqueue
 Version:     0.7.1
 Synopsis:    POSIX message queues
 Description:  The mqueue library is a small OCaml library providing types
@@ -13,13 +13,13 @@ Homepage:    http://mqueue.forge.ocamlcore.org/
 License:     MIT
 Plugins:     META (0.4)
 
-Library "mqueue"
+Library "posix-mqueue"
   Path:       src
   CSources:   mqueue_stubs.c
   CCLib:      -lrt
   CCOpt:      -O2 -Wall -Wextra -Wno-unused-parameter
   BuildTools: ocamlbuild
-  Modules:    Mqueue
+  Modules:    Posix_mqueue
   BuildDepends: unix, posix-time, bytes, result
 
 Document doclib
@@ -28,7 +28,7 @@ Document doclib
   Install:    false
   BuildTools+: ocamlbuild, ocamldoc
   XOCamlbuildPath: src
-  XOCamlbuildLibraries: mqueue
+  XOCamlbuildLibraries: posix-mqueue
 
 Executable "mqtest"
   Path:       test
@@ -37,7 +37,7 @@ Executable "mqtest"
   CompiledObject: best
   BuildTools: ocamlbuild
   Install: false
-  BuildDepends: mqueue
+  BuildDepends: posix-mqueue
 
 Test "mqtest"
   Run$: flag(tests)
