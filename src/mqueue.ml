@@ -42,40 +42,35 @@ type message = {
   priority : int;
 }
 
-type timespec = {
-  tv_sec : int;
-  tv_nsec : int;
-}
-
 external mq_initialize : unit -> unit = "mqueue_initialize"
 let () = mq_initialize ()
 
 external mq_open : string -> flag list -> Unix.file_perm -> mq_attr ->
-  (t, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_open"
+  (t, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_open"
 
 external mq_close : t ->
-  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_close"
+  (unit, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_close"
 
 external mq_send : t -> message ->
-  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_send"
+  (unit, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_send"
 
-external mq_timedsend : t -> message -> timespec ->
-  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_timedsend"
+external mq_timedsend : t -> message -> Posix_time.Timespec.t ->
+  (unit, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_timedsend"
 
 external mq_receive : t -> int ->
-  (message, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_receive"
+  (message, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_receive"
 
-external mq_timedreceive : t -> int -> timespec ->
-  (message, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_timedreceive"
+external mq_timedreceive : t -> int -> Posix_time.Timespec.t ->
+  (message, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_timedreceive"
 
 external mq_unlink : string ->
-  (unit, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_unlink"
+  (unit, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_unlink"
 
 external mq_getattr : t ->
-  (mq_attr, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_getattr"
+  (mq_attr, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_getattr"
 
 external mq_setattr : t -> mq_attr ->
-  (mq_attr, [>`EUnix of Unix.error]) Rresult.result = "mqueue_mq_setattr"
+  (mq_attr, [>`EUnix of Unix.error]) Result.result = "mqueue_mq_setattr"
 
 external mq_prio_max_ext : unit -> int = "mqueue_mq_prio_max"
 let mq_prio_max = mq_prio_max_ext ()

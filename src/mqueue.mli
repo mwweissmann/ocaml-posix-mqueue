@@ -49,11 +49,6 @@ type message = {
   priority : int;
 }
 
-type timespec = {
-  tv_sec : int;
-  tv_nsec : int;
-}
-
 (** Open a POSIX message queue; [mq_open p fs perm attr] opens the message queue
   of name [p] with the given flags [fs], permissions [perm] (if created) and
   queue attributes [attr].
@@ -69,43 +64,43 @@ type timespec = {
   access rights to an already existing queue and using queue sizes larger than
   allowed for normal users.
 *)
-val mq_open : string -> flag list -> Unix.file_perm -> mq_attr -> (t, [> `EUnix of Unix.error ]) Rresult.result
+val mq_open : string -> flag list -> Unix.file_perm -> mq_attr -> (t, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_send q m] sends the nessage [m] on the queue [q]; if the queue is full,
   this call will block; *)
-val mq_send : t -> message -> (unit, [> `EUnix of Unix.error ]) Rresult.result
+val mq_send : t -> message -> (unit, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_timedsend q m time] behaves like [mq_send q m] except that if the queue
   is full -- and [O_NONBLOCK] is not enabled for [q] -- then [time] will give an
   absolute ceiling for a timeout (given as absolute time since 01.01.1970 00:00:00 (UTC)). *)
-val mq_timedsend : t -> message -> timespec -> (unit, [> `EUnix of Unix.error ]) Rresult.result
+val mq_timedsend : t -> message -> Posix_time.Timespec.t -> (unit, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_receive q bufsiz] removes the oldest  message  with  the highest
   priority from the message queue. The [bufsiz] argument must be at least the
   maximum message size [.mq_msgsize] of the queue attributes. The returned
   message is a copy and will not be altered by subsequent calls. *)
-val mq_receive : t -> int -> (message, [> `EUnix of Unix.error ]) Rresult.result
+val mq_receive : t -> int -> (message, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_timedreceive q bufsiz time] behaves like [mq_send q bufsiz] except
   that if the queue is empty -- and the O_NONBLOCK flag is not enabled for
   [q] -- then [time] will give an absolute ceiling for a timeout (given as
   absolute time since 01.01.1970 00:00:00 (UTC)). *)
-val mq_timedreceive : t -> int -> timespec -> (message, [> `EUnix of Unix.error ]) Rresult.result
+val mq_timedreceive : t -> int -> Posix_time.Timespec.t -> (message, [> `EUnix of Unix.error ]) Result.result
 
 (** Explicitely close the message queue; the queue is automatically closed when
   cleaned up by the garbage collector, so executing [mq_close] on a queue is
   purely optional. *)
-val mq_close : t -> (unit, [> `EUnix of Unix.error ]) Rresult.result
+val mq_close : t -> (unit, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_unlink "/somequeue"] deletes the message queue ["/somequeue"]. *)
-val mq_unlink : string -> (unit, [> `EUnix of Unix.error ]) Rresult.result
+val mq_unlink : string -> (unit, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_setattr q attr] tries to set the attributes of the message queue [q] to
   the new attributes [attr]. The new actual attributes are returned. *)
-val mq_setattr : t -> mq_attr -> (mq_attr, [> `EUnix of Unix.error ]) Rresult.result
+val mq_setattr : t -> mq_attr -> (mq_attr, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_getattr q] returns the attributes of the message queue [q] *)
-val mq_getattr : t -> (mq_attr, [> `EUnix of Unix.error ]) Rresult.result
+val mq_getattr : t -> (mq_attr, [> `EUnix of Unix.error ]) Result.result
 
 (** [mq_prio_max] provides the maximum priority that can be given to a
   message; the lowest priority is [0]; POSIX guarantees [mq_prio_max >= 31] *)

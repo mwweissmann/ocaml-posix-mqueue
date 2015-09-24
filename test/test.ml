@@ -1,7 +1,9 @@
-open Rresult
 open Mqueue
 
 let name = "/myqueue"
+
+let ( >>= ) a f = match a with | Result.Ok v -> f v | Result.Error _ as e -> e
+let ( >>| ) a f = match a with | Result.Ok v -> Result.Ok (f v) | Result.Error _ as e -> e
 
 let _ =
 (*
@@ -18,8 +20,8 @@ let _ =
   in
   let _ = mq_unlink name in
   let () = match rc with
-    | Rresult.Ok _ -> ()
-    | Rresult.Error (`EUnix errno) -> print_endline (Unix.error_message errno)
+    | Result.Ok _ -> ()
+    | Result.Error (`EUnix errno) -> print_endline (Unix.error_message errno)
   in
   let () = Gc.full_major () in
   print_endline "test done"

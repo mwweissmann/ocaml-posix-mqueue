@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 69ba0d91f282b76a3ae05f05ddd43aa9)
-version = "0.7.0"
+# DO NOT EDIT (digest: f4e59ab5eee8118c0cf91677423f8313)
+version = "0.7.1"
 description = "POSIX message queues"
-requires = "unix bytes rresult"
+requires = "unix posix-time bytes result"
 archive(byte) = "mqueue.cma"
 archive(byte, plugin) = "mqueue.cma"
 archive(native) = "mqueue.cmxa"
