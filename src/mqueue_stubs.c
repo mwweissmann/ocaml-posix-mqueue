@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include <caml/threads.h>
 #include <caml/signals.h>
 #include <caml/custom.h>
+#include <posix-time/posix-time.h>
 
 void finalize_mq(value v) {
   mqd_t * fd;
@@ -364,8 +365,7 @@ CAMLprim value mqueue_mq_timedsend(value mq, value message, value timeout) {
   fd = (mqd_t *)Data_custom_val(mq);
 
   p = Int_val(Field(message, 1));
-  time.tv_sec = Int_val(Field(timeout, 0));
-  time.tv_nsec = Int_val(Field(timeout, 1));
+  time = timespec_val(timeout);
 
   msg_len = caml_string_length(Field(message, 0));
 #ifdef NOALLOCA
@@ -484,8 +484,7 @@ CAMLprim value mqueue_mq_timedreceive(value mq, value size, value timeout) {
   fd = (mqd_t *)Data_custom_val(mq);
 
   bufsiz = Int_val(size);
-  time.tv_sec = Int_val(Field(timeout, 0));
-  time.tv_nsec = Int_val(Field(timeout, 1));
+  time = timespec_val(timeout);
 
 #ifdef NOALLOCA
   if (NULL == (buf = malloc(bufsiz))) {
